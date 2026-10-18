@@ -9,3 +9,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+# ---- Render Landing page ----
+Route::get('/', fn () => Inertia::render('Landing'))->name('home');

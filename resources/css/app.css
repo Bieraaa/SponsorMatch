@@ -170,3 +170,23 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* TEMPEL di bagian BAWAH resources/css/app.css (jangan ganti isi file lama).
+   Tailwind v4: token di @theme otomatis jadi kelas, mis. bg-sm-navy, text-sm-red, font-poppins. */
+@theme {
+    --color-sm-navy: #161e2f;
+    --color-sm-card: #242f49;
+    --color-sm-card-2: #384358;
+    --color-sm-red: #b51a2b;
+    --color-sm-red-dark: #541a2e;
+    --color-sm-amber: #f59e0b;
+    --color-sm-peach: #ffa586;
+    --color-sm-footer: #e6e6e6;
+
+    --font-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+    --font-jakarta: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
