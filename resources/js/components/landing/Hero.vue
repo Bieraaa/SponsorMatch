@@ -1,47 +1,91 @@
-```vue
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 
+/**
+ * ============================================================================
+ * HERO — seksi pertama (#beranda), layar penuh pertama setelah navbar
+ * ============================================================================
+ * Struktur:
+ *   [section]        -> min-h-svh + snap-start (1 layar penuh, scroll-snap)
+ *     [kiri]         -> judul, subjudul, paragraf, tombol CTA
+ *     [kanan]        -> glow peach + ilustrasi +3 chip mengambang
+ */
+
+// Data3 chip yang melayang di atas ilustrasi.
+// Dipetakan lewat v-for, jadi posisi/isi chip diatur cukup dari array ini.
+// `class` = posisi absolut terhadap kotak ilustrasi (persen dari lebar/tinggi gambar).
 const chips = [
     {
-        title: 'AI Matching',
-        note: 'Efisien · Relevan',
-        icon: 'vector_ai.svg',
-        class: 'left-[40%] top-[3%]',
+        title: 'AI Matching', // judul chip (baris atas)
+        note: 'Efisien · Relevan', // keterangan chip (baris bawah)
+        icon: 'vector_ai.svg', // icon di lingkaran peach, file dari public/assets/
+        class: 'left-[40%] top-[0%]', // posisi: agak kanan dari tengah, menempel atas
     },
     {
         title: 'Event',
         note: 'Festival · Seminar · Expo',
         icon: 'vector_event.svg',
-        class: 'left-[-2%] top-[28%]',
+        class: 'left-[-5%] top-[9%]', // posisi: kiri, sedikit keluar tepi kiri
     },
     {
         title: 'Perusahaan',
         note: 'Brand · Partnership',
         icon: 'vector_perusahaan.svg',
-        class: 'right-[-2%] top-[42%]',
+        class: 'right-[-2%] top-[9%]', // posisi: kanan, sedikit keluar tepi kanan
     },
 ];
 </script>
 
 <template>
+    <!--
+        <section> =1 seksi scroll-snap:
+        - id="beranda"   -> target link navbar (#beranda)
+        - relative/isolate → membentuk konteks stacking sendiri (isolate),
+        supaya z-index anak (z-0, z-10, z-20) tidak bocor ke elemen luar
+        - min-h-svh      -> minimal setinggi layar viewport (small viewport height)
+        - snap-start     -> scroll-snap: seksi ini mengunci di awal layar
+        - overflow-hidden -> glow yang melebar keluar kotak tidak membuat scroll horizontal
+    -->
     <section
         id="beranda"
         class="relative isolate flex min-h-svh snap-start items-center overflow-hidden"
     >
+        <!--
+            Kontainer isi2 kolom:
+            - grid-cols-1 (mobile: bertumpuk) → lg:grid-cols-[0.85fr_1.1fr]
+              = di layar lebar: teks45%, visual55% (kolom kanan lebih besar
+              karena ilustrasi + chip butuh ruang)
+            - max-w-[1800px] → batas lebar desain hero (lebih lebar dari WhyUs
+              yang1440px, agar ilustrasi bisa besar)
+            - pt-24 → jarak atas mengompensasi navbar sticky (68px) + napas
+        -->
         <div
             class="mx-auto grid w-full max-w-[1800px] grid-cols-1 items-center gap-12 px-5 pb-12 pt-24 sm:px-8 md:gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8 lg:px-10 lg:py-20 xl:gap-12 xl:px-14 2xl:px-16"
         >
-            <!-- KONTEN TEKS -->
+            <!--
+                KOLOM KIRI — Konten teks.
+                z-20 supaya teks selalu di atas glow/gambar kalau tumpang tindih.
+                items-start → semua anak rata kiri.
+            -->
             <div
                 class="relative z-20 flex flex-col items-start lg:py-8"
             >
+                <!--
+                    Judul utama: "Sponsor" merah + "Match" putih (span terpisah).
+                    Ukuran naik per breakpoint: text-5xl → sm:6xl → md:7xl →
+                    lg clamp (3.5rem–5.5rem, ikut lebar layar) → xl:88px.
+                    clamp() dipakai agar teks tidak pecah di rentang layar tengah.
+                -->
                 <h1
                     class="font-poppins text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-[clamp(3.5rem,5.2vw,5.5rem)] xl:text-[88px]"
                 >
                     <span class="text-sm-red">Sponsor</span>Match
                 </h1>
 
+                <!--
+                    Subjudul. max-w-xl membatasi lebar baris agar tidak terlalu
+                    panjang. "Sponsor" di sini amber (berbeda dari judul yang merah).
+                -->
                 <p
                     class="mt-6 max-w-xl font-poppins text-2xl font-semibold leading-snug sm:text-3xl lg:mt-8 lg:text-[clamp(1.75rem,2.4vw,2rem)]"
                 >
@@ -49,6 +93,11 @@ const chips = [
                     <span class="text-sm-amber">Sponsor</span>?
                 </p>
 
+                <!--
+                    Paragraf penjelasan singkat. max-w-lg lebih sempit dari
+                    subjudul supaya barisnya pendek dan enak dibaca.
+                    text-white/80 = putih80% opasitas (tidak menyilaukan).
+                -->
                 <p
                     class="mt-5 max-w-lg font-poppins text-sm leading-7 text-white/80 sm:text-base lg:mt-6 lg:text-lg lg:leading-8"
                 >
@@ -57,11 +106,19 @@ const chips = [
                     kerja sama lebih tepat sasaran.
                 </p>
 
+                <!--
+                    Tombol CTA (Call to Action) → halaman daftar akun.
+                    <Link> dari Inertia = navigasi tanpa reload penuh (SPA).
+                    Efek hover: tombol naik (-translate-y-1) + warna lebih gelap,
+                    panah geser kanan (group-hover di dalam Link).
+                    shadow-sm-red/20 = bayangan merah transparan20%.
+                -->
                 <Link
                     href="/register"
                     class="mt-8 inline-flex items-center gap-3 rounded-xl bg-sm-red px-6 py-3.5 font-poppins text-base font-semibold text-white shadow-lg shadow-sm-red/20 transition duration-300 hover:-translate-y-1 hover:bg-sm-red-dark sm:text-lg"
                 >
                     Mulai Sekarang
+                    <!-- Panah putih; transition-transform supaya mulus saat hover -->
                     <img
                         src="/assets/vector_next_kanan_putih.svg"
                         alt=""
@@ -70,30 +127,63 @@ const chips = [
                 </Link>
             </div>
 
-            <!-- VISUAL HERO -->
+            <!--
+                KOLOM KANAN — Visual hero (glow + ilustrasi + chip).
+                relative → titik acuan posisi absolute anak-anaknya.
+                lg:ml-auto lg:mr-0 → di layar lebar kolom ini menempel kanan.
+            -->
             <div
                 class="relative mx-auto w-full min-w-0 max-w-[10000px] self-center lg:ml-auto lg:mr-0"
             >
-                <!-- Glow di belakang ilustrasi (mengikuti rasio gambar 867x849) -->
+                <!--
+                    GLOW peach di BELAKANG ilustrasi:
+                    - aspect-[867/849] → kotak glow ikut rasio gambar ilustrasi
+                      (932×849≈ rasio yang dipakai), jadi glow tidak pernah
+                      "meleset" dari bentuk gambar
+                    - w-[88%] + left-[6%] top-[4%] → sedikit lebih kecil dari gambar,
+                      sedikit menggeser ke kanan-bawah supaya sinar terlihat di
+                      balik bagian transparan ilustrasi
+                    - radial-gradient: inti peach #FFA586 → pudar ke #242F49
+                      (mendekati warna kartu/navy agar tepinya menyatu)
+                    - z-0 → paling bawah; pointer-events-none → tidak menghalangi klik
+                -->
                 <div
                     class="pointer-events-none absolute left-[6%] top-[4%] z-0 aspect-[867/849] w-[88%] rounded-full bg-[radial-gradient(circle_at_45%_35%,#FFA586_0%,#242F49_95%)]"
                     aria-hidden="true"
                 />
 
-                <!-- Ilustrasi utama -->
+                <!--
+                    Ilustrasi utama. z-10 → di atas glow, di bawah chip (z-20).
+                    lg:scale-105 xl:scale-110 → gambar sengaja di-perbesar5–10%
+                    di layar lebar supaya terasa besar sesuai desain.
+                -->
                 <img
                     src="/assets/gambar_landing_page_desk_1.png"
                     alt="Event organizer dan perwakilan perusahaan berdiskusi"
                     class="relative z-10 block h-auto w-full origin-center object-contain lg:scale-105 xl:scale-110"
                 />
 
-                <!-- Chip informasi -->
+                <!--
+                    CHIP mengambang (diulang3× dari array `chips`):
+                    - hidden md:flex → chip hanya tampil di layar ≥768px
+                      (di mobile dianggap terlalu padat)
+                    - absolute + class dari array → menempel pada posisi persen
+                      relatif terhadap kotak ilustrasi
+                    - z-20 → di atas gambar
+                    - bg-white/95 + backdrop-blur → kartu putih semi-transparan
+                    - shadow → bayangan lembut agar terpisah dari gambar
+                -->
                 <div
                     v-for="chip in chips"
                     :key="chip.title"
                     :class="chip.class"
                     class="absolute z-20 hidden items-center gap-2 rounded-lg border border-white/70 bg-white/95 px-2.5 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.16)] backdrop-blur-sm md:flex lg:gap-2.5 lg:px-3 lg:py-2"
                 >
+                    <!--
+                        Badge icon: lingkaran peach (#FFA586)28px (lg:32px)
+                        sebagai latar icon kecil hitam/navy.
+                        shrink-0 → tidak menyusut.
+                    -->
                     <span
                         class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sm-peach lg:h-8 lg:w-8"
                     >
@@ -104,7 +194,9 @@ const chips = [
                         />
                     </span>
 
+                    <!-- Teks chip2 baris: judul (tebal) + keterangan (tipis) -->
                     <div class="min-w-0 font-poppins leading-tight">
+                        <!-- whitespace-nowrap → judul tidak boleh pindah baris -->
                         <p
                             class="whitespace-nowrap text-[10px] font-semibold text-sm-navy lg:text-[11px]"
                         >
@@ -117,6 +209,10 @@ const chips = [
                         </p>
                     </div>
 
+                    <!--
+                        Panah kanan "→" sebagai penanda bisa diklik.
+                        &rarr; = HTML entity untuk panah (→).
+                    -->
                     <span
                         class="ml-0.5 text-sm leading-none text-sm-navy"
                         aria-hidden="true"
@@ -128,4 +224,3 @@ const chips = [
         </div>
     </section>
 </template>
-```
