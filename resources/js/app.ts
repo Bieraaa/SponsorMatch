@@ -13,6 +13,11 @@ void createInertiaApp({
         switch (true) {
             case name === 'Welcome':
             case name === 'Landing':
+            // Blok A: halaman Register & Login mengatur layout-nya sendiri
+            // (split kiri-kanan sesuai Figma "Role pick" dan "Login"),
+            // jadi tidak pakai AuthLayout.
+            case name === 'auth/Register':
+            case name === 'auth/Login':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

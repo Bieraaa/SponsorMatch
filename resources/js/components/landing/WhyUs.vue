@@ -79,15 +79,17 @@ const { el: sectionEl, revealed } = useReveal(0.25);
                 :class="revealed ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'"
             >
                 <!--
-                    Rectangle gradien di BELAKANG foto:
-                    - left/right -6% -> sedikit lebih lebar dari foto (menonjol di2 sisi)
-                    - top-[3%] h-[74%] -> puncak tidak melewati dahi, menutupi ~3/4 foto
-                    - rounded-tl/tr-[80px] -> sudut atas kiri-kanan membulat80px
-                    - gradien 180deg: merah #B51A2B (0%) -> ungu #661C2D (33%) -> navy #161E2F (100%)
+                    Rectangle gradien di BELAKANG foto (hasil ukur desain target):
+                    - left-0 right-0 → lebar PAS selebar foto (inset0%, bukan menonjol)
+                    - top-[3.5%] h-[96.5%] → puncak ~3.5% dari atas foto (tidak
+                      melewati dahi), bawahnya MENYENTUH tepi bawah foto
+                    - rounded-tl/tr-[80px] → sudut atas membulat80px
+                    - gradien 180deg berakhir #161E2F = warna bg seksi → merah
+                      memudar tanpa tepi tegas di bawah (persis seperti target)
                     Anak pertama tanpa z → otomatis di bawah foto (z-10).
                 -->
                 <div
-                    class="absolute left-[-6%] right-[-6%] top-[3%] h-[74%] rounded-tl-[80px] rounded-tr-[80px] bg-[linear-gradient(180deg,#B51A2B_0%,#661C2D_33%,#161E2F_100%)]"
+                    class="absolute left-0 right-0 top-[3.5%] h-[96.5%] rounded-tl-[80px] rounded-tr-[80px] bg-[linear-gradient(180deg,#B51A2B_0%,#661C2D_33%,#161E2F_100%)]"
                     aria-hidden="true"
                 />
 
@@ -117,23 +119,28 @@ const { el: sectionEl, revealed } = useReveal(0.25);
             </div>
 
             <!--
-                KOLOM KANAN — Teks +4 kartu fitur.
-                flex-1 min-w-0 → memakan sisa ruang, dan boleh menyusut tanpa
-                mendorong layout (min-w-0 mencegah teks panjang "melompat" keluar).
-                delay-150 → animasi ini mulai150ms setelah kolom foto (efek berurutan).
+                KOLOM KANAN — PANEL besar berisi teks +4 kartu fitur.
+                - flex-1 min-w-0 → memakan sisa ruang di samping foto, boleh
+                menyusut tanpa mendorong layout
+                - rounded-xl (12px) → radius ~13px hasil ukur dari desain
+                - border-[0.5px] border-sm-amber → garis tepi amber tipis
+                - gradient #384358 → #242F48 → #212B43 → #161E2F:
+                stop akhir SAMA dengan warna bg seksi, jadi tepi bawah panel
+                mencair ke latar dan tidak terlihat sebagai garis potong
+                - p-6 sm:p-9 lg:p-12 → padding dalam (≈48px di layar lebar)
+                - delay-150 → muncul150ms setelah kolom foto (efek berurutan)
+                - (Eyebrow "Tentang SponsorMatch" dihapus: tidak ada di desain target)
             -->
             <div
-                class="w-full min-w-0 flex-1 transition-all delay-150 duration-700 ease-out"
+                class="w-full min-w-0 flex-1 rounded-xl border-[0.5px] border-sm-amber bg-[linear-gradient(180deg,#384358_0%,#242F48_45%,#212B43_65%,#161E2F_100%)] p-6 transition-all delay-150 duration-700 ease-out sm:p-9 lg:p-12"
                 :class="revealed ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'"
             >
-                <!-- Eyebrow: teks kecil kapital berjarak lebar di atas judul -->
-                <p class="font-poppins text-sm font-semibold uppercase tracking-widest text-sm-amber">
-                    Tentang SponsorMatch
-                </p>
-
-                <!-- Judul seksi. "SponsorMatch" diwarnai merah (token sm-red) -->
-                <h2 class="mt-3 font-poppins text-4xl font-bold leading-tight lg:text-5xl">
-                    Kenapa harus <span class="text-sm-red">SponsorMatch</span>?
+                <!--
+                    Judul seksi. Sesuai desain: HANYA kata "Sponsor" yang merah,
+                    "Kenapa Harus" dan "Match?" tetap putih.
+                -->
+                <h2 class="font-poppins text-4xl font-bold leading-tight lg:text-5xl">
+                    Kenapa Harus <span class="text-sm-red">Sponsor</span>Match?
                 </h2>
 
                 <!--

@@ -14,24 +14,26 @@ import { Link } from '@inertiajs/vue3';
 // Data3 chip yang melayang di atas ilustrasi.
 // Dipetakan lewat v-for, jadi posisi/isi chip diatur cukup dari array ini.
 // `class` = posisi absolut terhadap kotak ilustrasi (persen dari lebar/tinggi gambar).
+// Posisi sesuai desain target: AI Matching di KIRI, Event di TENGAH (menempel
+// atas), Perusahaan di KANAN bawah — tidak ada yang keluar tepi kolom.
 const chips = [
     {
         title: 'AI Matching', // judul chip (baris atas)
         note: 'Efisien · Relevan', // keterangan chip (baris bawah)
         icon: 'vector_ai.svg', // icon di lingkaran peach, file dari public/assets/
-        class: 'left-[40%] top-[0%]', // posisi: agak kanan dari tengah, menempel atas
+        class: 'left-[14%] top-[9%]', // posisi: kiri-atas ilustrasi
     },
     {
         title: 'Event',
         note: 'Festival · Seminar · Expo',
         icon: 'vector_event.svg',
-        class: 'left-[-5%] top-[9%]', // posisi: kiri, sedikit keluar tepi kiri
+        class: 'left-[39%] top-0', // posisi: tengah, menempel tepi atas ilustrasi
     },
     {
         title: 'Perusahaan',
         note: 'Brand · Partnership',
         icon: 'vector_perusahaan.svg',
-        class: 'right-[-2%] top-[9%]', // posisi: kanan, sedikit keluar tepi kanan
+        class: 'left-[75%] top-[13%]', // posisi: kanan-bawah (75% + lebar chip ≈97%, masih di dalam)
     },
 ];
 </script>
@@ -138,13 +140,11 @@ const chips = [
                 <!--
                     GLOW peach di BELAKANG ilustrasi:
                     - aspect-[867/849] → kotak glow ikut rasio gambar ilustrasi
-                      (932×849≈ rasio yang dipakai), jadi glow tidak pernah
-                      "meleset" dari bentuk gambar
-                    - w-[88%] + left-[6%] top-[4%] → sedikit lebih kecil dari gambar,
-                      sedikit menggeser ke kanan-bawah supaya sinar terlihat di
-                      balik bagian transparan ilustrasi
-                    - radial-gradient: inti peach #FFA586 → pudar ke #242F49
-                      (mendekati warna kartu/navy agar tepinya menyatu)
+                      (932×849), jadi glow tidak pernah "meleset" dari bentuk gambar
+                    - w-[88%] + left-[6%] top-[4%] → sedikit lebih kecil dari gambar
+                    - radial-gradient CIRCLE: inti peach #FFA586 membulat BESAR,
+                      memudar ke #242F49 di95% radius (halo lebar, sesuai yang
+                      kamu suka — jangan dipepet pakai ellipse)
                     - z-0 → paling bawah; pointer-events-none → tidak menghalangi klik
                 -->
                 <div
@@ -170,27 +170,31 @@ const chips = [
                     - absolute + class dari array → menempel pada posisi persen
                       relatif terhadap kotak ilustrasi
                     - z-20 → di atas gambar
-                    - bg-white/95 + backdrop-blur → kartu putih semi-transparan
+                    - bg-white POLOS (target: putih solid, bukan semi-transparan)
+                      jadi backdrop-blur tidak diperlukan lagi
+                    - ukuran diperkecil (px-2 py-1, badge20px) agar chip ±118×31px
+                      di layar lg, proporsional dengan desain target (92×24px
+                      pada skala gambar)
                     - shadow → bayangan lembut agar terpisah dari gambar
                 -->
                 <div
                     v-for="chip in chips"
                     :key="chip.title"
                     :class="chip.class"
-                    class="absolute z-20 hidden items-center gap-2 rounded-lg border border-white/70 bg-white/95 px-2.5 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.16)] backdrop-blur-sm md:flex lg:gap-2.5 lg:px-3 lg:py-2"
+                    class="absolute z-20 hidden items-center gap-1.5 rounded-lg border border-white/70 bg-white px-2 py-1 shadow-[0_8px_30px_rgba(0,0,0,0.16)] md:flex lg:gap-2 lg:px-2.5 lg:py-1.5"
                 >
                     <!--
-                        Badge icon: lingkaran peach (#FFA586)28px (lg:32px)
+                        Badge icon: lingkaran peach (#FFA586)20px (lg:24px)
                         sebagai latar icon kecil hitam/navy.
                         shrink-0 → tidak menyusut.
                     -->
                     <span
-                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sm-peach lg:h-8 lg:w-8"
+                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sm-peach lg:h-6 lg:w-6"
                     >
                         <img
                             :src="`/assets/${chip.icon}`"
                             alt=""
-                            class="h-4 w-4 lg:h-5 lg:w-5"
+                            class="h-3 w-3 lg:h-3.5 lg:w-3.5"
                         />
                     </span>
 
@@ -198,12 +202,12 @@ const chips = [
                     <div class="min-w-0 font-poppins leading-tight">
                         <!-- whitespace-nowrap → judul tidak boleh pindah baris -->
                         <p
-                            class="whitespace-nowrap text-[10px] font-semibold text-sm-navy lg:text-[11px]"
+                            class="whitespace-nowrap text-[9px] font-semibold text-sm-navy lg:text-[10px]"
                         >
                             {{ chip.title }}
                         </p>
                         <p
-                            class="mt-0.5 whitespace-nowrap text-[8px] text-sm-navy/65 lg:text-[9px]"
+                            class="mt-0.5 whitespace-nowrap text-[7px] text-sm-navy/65 lg:text-[8px]"
                         >
                             {{ chip.note }}
                         </p>
@@ -214,7 +218,7 @@ const chips = [
                         &rarr; = HTML entity untuk panah (→).
                     -->
                     <span
-                        class="ml-0.5 text-sm leading-none text-sm-navy"
+                        class="ml-0.5 text-[10px] leading-none text-sm-navy lg:text-[11px]"
                         aria-hidden="true"
                     >
                         &rarr;

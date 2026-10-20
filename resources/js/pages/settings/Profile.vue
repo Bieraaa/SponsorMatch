@@ -35,9 +35,42 @@ const user = computed(() => page.props.auth.user);
     <div class="flex flex-col space-y-6">
         <Heading
             variant="small"
-            title="Profile"
-            description="Update your name and email address"
+            title="Profil"
+            description="Perbarui nama dan email kamu"
         />
+
+        <!-- Blok A — Kartu identitas & badge role (eo / sponsor) -->
+        <div
+            class="flex items-center gap-4 rounded-2xl border border-sidebar-border bg-white p-6 shadow-sm"
+        >
+            <span
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-sm-card text-lg font-semibold text-white"
+            >
+                {{ (user.name ?? '?').charAt(0).toUpperCase() }}
+            </span>
+            <div class="min-w-0">
+                <p class="truncate text-lg font-semibold text-sm-navy">
+                    {{ user.name }}
+                </p>
+                <p class="truncate text-sm text-sm-card/70">
+                    {{ user.email }}
+                </p>
+                <span
+                    class="mt-2 inline-block w-fit rounded-full px-3 py-1 text-xs font-semibold"
+                    :class="
+                        user.role === 'sponsor'
+                            ? 'bg-sm-card text-white'
+                            : 'bg-sm-red text-white'
+                    "
+                >
+                    {{
+                        user.role === 'sponsor'
+                            ? 'Perusahaan (Sponsor)'
+                            : 'Event Organizer'
+                    }}
+                </span>
+            </div>
+        </div>
 
         <Form
             v-bind="ProfileController.update.form()"
@@ -45,7 +78,7 @@ const user = computed(() => page.props.auth.user);
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
-                <Label for="name">Name</Label>
+                <Label for="name">Nama</Label>
                 <Input
                     id="name"
                     class="mt-1 block w-full"
@@ -59,7 +92,7 @@ const user = computed(() => page.props.auth.user);
             </div>
 
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">Alamat Email</Label>
                 <Input
                     id="email"
                     type="email"
@@ -95,7 +128,7 @@ const user = computed(() => page.props.auth.user);
 
             <div class="flex items-center gap-4">
                 <Button :disabled="processing" data-test="update-profile-button"
-                    >Save</Button
+                    >Simpan</Button
                 >
             </div>
         </Form>
