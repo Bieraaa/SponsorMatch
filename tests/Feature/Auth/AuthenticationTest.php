@@ -65,6 +65,53 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_inactive_users_can_not_authenticate()
+    {
+        $user = User::factory()->create(['isActive' => false]);
+
+        $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+    }
+
+    public function test_successful_login_records_last_login_and_attempt()
+    {
+        $user = User::factory()->create();
+
+        $this->assertNull($user->last_login_at);
+
+        $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertNotNull($user->refresh()->last_login_at);
+        $this->assertDatabaseHas('loginattemp', [
+            'email' => $user->email,
+            'succes' => 1,
+        ]);
+    }
+
+    public function test_failed_login_is_recorded_in_login_attempts()
+    {
+        $user = User::factory()->create();
+
+        $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ]);
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('loginattemp', [
+            'email' => $user->email,
+            'succes' => 0,
+        ]);
+    }
+
     public function test_users_can_logout()
     {
         $user = User::factory()->create();

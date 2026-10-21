@@ -11,13 +11,17 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
+            // Halaman publik & halaman auth utama mengatur layoutnya sendiri
+            // (full-screen, tidak memakai kerangka sidebar/kartu starter kit):
+            //   - landing/Index      : snap-scroll satu halaman penuh
+            //   - auth/login/Index   : split kiri-ilustrasi + kanan-panel navy
+            //   - auth/register/*    : full-screen navy (role pick + form per peran)
             case name === 'Welcome':
-            case name === 'Landing':
-            // Blok A: halaman Register & Login mengatur layout-nya sendiri
-            // (split kiri-kanan sesuai Figma "Role pick" dan "Login"),
-            // jadi tidak pakai AuthLayout.
-            case name === 'auth/Register':
-            case name === 'auth/Login':
+            case name === 'landing/Index':
+            case name === 'auth/login/Index':
+            case name === 'auth/register/Index':
+            case name === 'auth/register/eo/Index':
+            case name === 'auth/register/perusahaan/Index':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

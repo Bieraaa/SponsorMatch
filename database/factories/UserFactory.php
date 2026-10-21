@@ -29,11 +29,26 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'eo',
+            'nomor_telepon' => fake()->numerify('08##########'),
+            'jabatan' => fake()->jobTitle(),
+            'status_subscription' => 'Reguler',
+            'isActive' => true,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * Buat akun dengan peran Perusahaan (sponsor).
+     */
+    public function company(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'sponsor',
+        ]);
     }
 
     /**
