@@ -15,17 +15,32 @@ import { Eye, EyeOff } from '@lucide/vue';
  * Hasil analisis piksel Figma export:
  * - Layout 2 kolom: kiri ilustrasi 600px (putih, aset gambar_login.png),
  *   kanan panel navy #161E2F full-height (x600-1440 = 840px).
- * - Form di kolom x664-1382 (lebar ~712px, padding panel ~64px).
- * - H1 "Selamat Datang" putih + "Kembali" MERAH #B51A2B, ~40px semibold.
- * - Input: isi PUTIH, border #541A2E 2px, radius 12px, tinggi 69px,
- *   ikon kiri (#242F49) jarak ~24px dari tepi, teks #242F49 18-20px.
- * - Checkbox "Ingat Saya" putih 24x24; "Lupa Password?" abu terang KANAN.
- * - Tombol "Masuk" merah full-width, tinggi 65px, radius 12px, teks putih.
- * - Pemisah "Atau" (garis + teks), lalu 2 tombol putih:
- *   "Lanjutkan dengan Google" & "Lanjutkan dengan Apple" (radius 12px).
+ * - Form di kolom x665-1382 (lebar ~717px, padding panel ~64px).
+ * - H1 "Selamat Datang" putih + "Kembali" MERAH #B51A2B di bagian atas.
+ * - Input: isi PUTIH, border #541A2E 2px, radius 12px,
+ *   ikon kiri (#242F49), teks #242F49.
+ * - Checkbox "Ingat Saya" putih; "Lupa Password?" abu terang KANAN.
+ * - Tombol "Masuk" merah full-width, radius 12px, teks putih.
+ * - Pemisah "Atau" (garis + teks), lalu tombol putih:
+ *   "Lanjutkan dengan Google".
  * - Footer: "Belum punya akun?" putih + "Daftar Sekarang" merah.
  * - Aset: gambar_login.png, icon_email.png, icon_password.png,
- *   icon_google.png, icon_apple.png (semua di /assets).
+ *   icon_google.png (semua di /assets).
+ *
+ * ============ TANPA SCROLL DI DESKTOP ============
+ * Desain Figma tingginya 1024px, tetapi layar desktop nyata (setelah
+ * dikurangi toolbar browser) hanya sekitar 700-800px. Kalau semua jarak
+ * Figma dipakai apa adanya, halaman jadi harus di-scroll.
+ *
+ * Karena itu tinggi elemen dan jarak vertikal di bawah ini diatur
+ * MENYESUAIKAN TINGGI LAYAR (`h-screen`, bukan `min-h-screen`), dengan
+ * proporsi visual yang tetap menyerupai Figma:
+ *   - container utama: h-screen + overflow-hidden (tidak bisa scroll)
+ *   - tinggi input/tombol memakai clamp() supaya mengecil di layar pendek
+ *   - jarak antar-elemen memakai spasi yang mengecil di layar pendek
+ *
+ * Di layar yang sangat pendek (mis. tinggi < 640px), konten dibiarkan
+ * bisa di-scroll supaya tetap bisa dipakai — lihat kelas `overflow-y-auto`.
  */
 
 defineProps<{
@@ -34,38 +49,51 @@ defineProps<{
 }>();
 
 const showPassword = ref(false);
+
+// Status checkbox "Ingat Saya". Dipakai supaya gambar centang (SVG)
+// bisa muncul/hilang langsung dari Vue — lihat komentar di template.
+const remember = ref(false);
 </script>
 
 <template>
     <Head title="Masuk" />
 
-    <div class="flex min-h-screen bg-white">
+    <!--
+        h-screen (bukan min-h-screen) = setinggi layar persis, jadi tidak ada
+        scroll di desktop. overflow-y-auto disiapkan sebagai jaring pengaman
+        untuk layar yang SANGAT pendek saja.
+    -->
+    <div class="flex h-screen overflow-hidden bg-white">
         <!-- Ilustrasi kiri (600x1024, sesuai Figma) — hanya tampil di layar besar -->
-        <div class="hidden bg-white lg:block lg:w-[600px] lg:shrink-0">
+        <div class="hidden shrink-0 bg-white lg:block lg:w-[42%] xl:w-[600px]">
             <img
                 src="/assets/gambar_login.png"
-                alt="SponsorMatch — Kolaborasi untuk Event Berdamapak"
+                alt="SponsorMatch — Kolaborasi untuk Event Berdampak"
                 class="h-full w-full object-cover object-top"
             />
         </div>
 
-        <!-- Panel kanan: navy, form di tengah, lebar konten 712px -->
-        <div class="flex flex-1 items-center justify-center bg-sm-navy px-6 py-16 lg:px-16">
-            <div class="w-full max-w-[712px]">
+        <!--
+            Panel kanan: navy, form di tengah. Konten dibungkus max-w 712px
+            dan dipusatkan; padding vertikal memakai clamp() agar menyusut
+            di layar pendek.
+        -->
+        <div class="flex flex-1 items-center justify-center overflow-y-auto bg-sm-navy px-6 lg:px-16">
+            <div class="w-full max-w-[712px] py-[clamp(1.5rem,4vh,4rem)]">
                 <div
                     v-if="status"
-                    class="mb-6 rounded-xl border-2 border-sm-red-dark bg-sm-card px-5 py-4 text-center text-sm font-medium text-white"
+                    class="mb-4 rounded-xl border-2 border-sm-red-dark bg-sm-card px-5 py-3 text-center text-sm font-medium text-white"
                 >
                     {{ status }}
                 </div>
 
-                <!-- H1: "Selamat Datang" putih + "Kembali" merah (40px) -->
-                <h1 class="text-[28px] font-semibold leading-tight text-white lg:text-[40px]">
+                <!-- H1: "Selamat Datang" putih + "Kembali" merah -->
+                <h1 class="text-[clamp(1.5rem,3.2vh,2.5rem)] font-semibold leading-tight text-white">
                     Selamat Datang <span class="text-sm-red">Kembali</span>
                 </h1>
 
-                <!-- Subteks (18px, putih) -->
-                <p class="mt-4 text-base leading-relaxed text-white lg:text-lg">
+                <!-- Subteks -->
+                <p class="mt-[clamp(0.5rem,1.4vh,1rem)] text-[clamp(0.95rem,1.7vh,1.125rem)] leading-snug text-white">
                     Masuk ke akun SponsorMatch untuk kembali melanjutkan perjalanan kolaborasi kamu
                 </p>
 
@@ -73,13 +101,13 @@ const showPassword = ref(false);
                     v-bind="store.form()"
                     :reset-on-success="['password']"
                     v-slot="{ errors, processing }"
-                    class="mt-12"
+                    class="mt-[clamp(1.25rem,3.2vh,3rem)]"
                 >
-                    <!-- Input Email (tinggi 69px, border #541A2E, radius 12px) -->
+                    <!-- Input Email -->
                     <div
-                        class="flex h-16 items-center gap-4 rounded-xl border-2 border-sm-red-dark bg-white px-5 lg:h-[69px]"
+                        class="flex h-[clamp(3.25rem,6.6vh,4.3125rem)] items-center gap-4 rounded-xl border-2 border-sm-red-dark bg-white px-5"
                     >
-                        <img src="/assets/icon_email.png" alt="" class="h-[30px] w-[38px] shrink-0" />
+                        <img src="/assets/icon_email.png" alt="" class="h-[38%] w-auto shrink-0" />
                         <input
                             id="email"
                             type="text"
@@ -89,16 +117,16 @@ const showPassword = ref(false);
                             :tabindex="1"
                             autocomplete="username"
                             placeholder="Email atau nomor telepon"
-                            class="h-full w-full border-0 bg-transparent text-base text-sm-card outline-none placeholder:text-sm-card lg:text-lg"
+                            class="h-full w-full border-0 bg-transparent text-[clamp(0.95rem,1.7vh,1.125rem)] text-sm-card outline-none placeholder:text-sm-card/70"
                         />
                     </div>
                     <InputError :message="errors.email" class="mt-2" />
 
-                    <!-- Input Password (sama, + toggle lihat password) -->
+                    <!-- Input Password (+ toggle lihat password) -->
                     <div
-                        class="mt-6 flex h-16 items-center gap-4 rounded-xl border-2 border-sm-red-dark bg-white px-5 lg:h-[69px]"
+                        class="mt-[clamp(0.75rem,1.8vh,1.5rem)] flex h-[clamp(3.25rem,6.6vh,4.3125rem)] items-center gap-4 rounded-xl border-2 border-sm-red-dark bg-white px-5"
                     >
-                        <img src="/assets/icon_password.png" alt="" class="h-9 w-9 shrink-0" />
+                        <img src="/assets/icon_password.png" alt="" class="h-[42%] w-auto shrink-0" />
                         <input
                             id="password"
                             :type="showPassword ? 'text' : 'password'"
@@ -107,7 +135,7 @@ const showPassword = ref(false);
                             :tabindex="2"
                             autocomplete="current-password"
                             placeholder="Password"
-                            class="h-full w-full border-0 bg-transparent text-base text-sm-card outline-none placeholder:text-sm-card lg:text-lg"
+                            class="h-full w-full border-0 bg-transparent text-[clamp(0.95rem,1.7vh,1.125rem)] text-sm-card outline-none placeholder:text-sm-card/70"
                         />
                         <button
                             type="button"
@@ -115,38 +143,62 @@ const showPassword = ref(false);
                             :tabindex="-1"
                             @click="showPassword = !showPassword"
                         >
-                            <Eye v-if="!showPassword" class="h-6 w-6" />
-                            <EyeOff v-else class="h-6 w-6" />
+                            <Eye v-if="!showPassword" class="h-[1.4em] w-[1.4em]" />
+                            <EyeOff v-else class="h-[1.4em] w-[1.4em]" />
                         </button>
                     </div>
                     <InputError :message="errors.password" class="mt-2" />
 
                     <!-- Baris: checkbox "Ingat Saya" (kiri) + "Lupa Password?" (kanan) -->
-                    <div class="mt-8 flex items-center justify-between">
+                    <div class="mt-[clamp(0.9rem,2.2vh,2rem)] flex items-center justify-between">
                         <label for="remember" class="flex cursor-pointer items-center gap-3">
-                            <input
-                                id="remember"
-                                name="remember"
-                                type="checkbox"
-                                :tabindex="3"
-                                class="h-6 w-6 cursor-pointer appearance-none rounded-md border-2 border-sm-red-dark bg-white checked:border-sm-red checked:bg-sm-red"
-                            />
-                            <span class="text-base text-white lg:text-lg">Ingat Saya</span>
+                            <!--
+                                Checkbox kustom "Ingat Saya".
+                                - `appearance-none` menghapus kotak bawaan browser.
+                                - Status centang dikendalikan Vue (`v-model="remember"`),
+                                  jadi gambar centang muncul/hilang lewat `v-show`.
+                                Cara ini paling pasti: tidak bergantung pada varian
+                                `peer-checked:` / `checked:` milik Tailwind sehingga
+                                centang selalu tampil saat kotak diklik.
+                            -->
+                            <span class="relative inline-flex h-[clamp(1.1rem,2.1vh,1.5rem)] w-[clamp(1.1rem,2.1vh,1.5rem)] shrink-0">
+                                <input
+                                    id="remember"
+                                    name="remember"
+                                    type="checkbox"
+                                    v-model="remember"
+                                    :tabindex="3"
+                                    class="h-full w-full cursor-pointer appearance-none rounded-md border-2 border-sm-red-dark bg-white checked:border-sm-red checked:bg-sm-red"
+                                />
+                                <svg
+                                    v-show="remember"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="white"
+                                    stroke-width="3.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="pointer-events-none absolute inset-0 m-auto h-[70%] w-[70%]"
+                                >
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </span>
+                            <span class="text-[clamp(0.95rem,1.7vh,1.125rem)] text-white">Ingat Saya</span>
                         </label>
                         <TextLink
                             v-if="canResetPassword"
                             :href="request()"
-                            class="text-base text-[#E2E3E5] hover:text-sm-red lg:text-lg"
+                            class="text-[clamp(0.95rem,1.7vh,1.125rem)] text-[#E2E3E5] hover:text-sm-red"
                             :tabindex="4"
                         >
                             Lupa Password?
                         </TextLink>
                     </div>
 
-                    <!-- Tombol Masuk (merah, tinggi 65px, radius 12px) -->
+                    <!-- Tombol Masuk (merah, radius 12px) -->
                     <button
                         type="submit"
-                        class="mt-9 flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-sm-red text-xl font-semibold text-white transition-colors hover:bg-sm-red-dark disabled:opacity-70 lg:h-[65px]"
+                        class="mt-[clamp(1rem,2.6vh,2.25rem)] flex h-[clamp(3.1rem,6.3vh,4.0625rem)] w-full items-center justify-center gap-3 rounded-xl bg-sm-red text-[clamp(1rem,2vh,1.25rem)] font-semibold text-white transition-colors hover:bg-sm-red-dark disabled:opacity-70"
                         :tabindex="5"
                         :disabled="processing"
                         data-test="login-button"
@@ -156,31 +208,25 @@ const showPassword = ref(false);
                     </button>
 
                     <!-- Pemisah "Atau" -->
-                    <div class="mt-10 flex items-center gap-4">
+                    <div class="mt-[clamp(1rem,2.6vh,2.5rem)] flex items-center gap-4">
                         <span class="h-px flex-1 bg-white/25"></span>
-                        <span class="text-base text-white lg:text-lg">Atau</span>
+                        <span class="text-[clamp(0.9rem,1.6vh,1.125rem)] text-white">Atau</span>
                         <span class="h-px flex-1 bg-white/25"></span>
                     </div>
 
                     <!-- Tombol sosial (tampilan sesuai Figma; backend login
-                         Google/Apple belum diintegrasikan — klik tidak berbuat apa-apa) -->
+                    Google belum diintegrasikan — klik tidak berbuat apa-apa).
+                    Tombol Apple sudah dihapus sesuai permintaan. -->
                     <button
                         type="button"
-                        class="mt-10 flex h-16 w-full items-center justify-center gap-6 rounded-xl border-2 border-sm-red-dark bg-white text-lg font-medium text-sm-card transition-colors hover:bg-gray-50 lg:h-[69px] lg:text-xl"
+                        class="mt-[clamp(1rem,2.6vh,2.5rem)] flex h-[clamp(3.25rem,6.6vh,4.3125rem)] w-full items-center justify-center gap-5 rounded-xl border-2 border-sm-red-dark bg-white text-[clamp(0.95rem,1.8vh,1.25rem)] font-medium text-sm-card transition-colors hover:bg-gray-50"
                     >
-                        <img src="/assets/icon_google.png" alt="" class="h-[38px] w-[37px]" />
+                        <img src="/assets/icon_google.png" alt="" class="h-[80%] w-auto" />
                         Lanjutkan dengan Google
-                    </button>
-                    <button
-                        type="button"
-                        class="mt-5 flex h-16 w-full items-center justify-center gap-6 rounded-xl border-2 border-sm-red-dark bg-white text-lg font-medium text-sm-card transition-colors hover:bg-gray-50 lg:h-[69px] lg:text-xl"
-                    >
-                        <img src="/assets/icon_apple.png" alt="" class="h-[39px] w-[33px]" />
-                        Lanjutkan dengan Apple
                     </button>
 
                     <!-- Footer: daftar -->
-                    <p class="mt-10 text-center text-base text-white lg:text-lg">
+                    <p class="mt-[clamp(1rem,2.4vh,2.5rem)] text-center text-[clamp(0.95rem,1.7vh,1.125rem)] text-white">
                         Belum punya akun?
                         <TextLink :href="register()" class="font-semibold text-sm-red hover:underline" :tabindex="6">
                             Daftar Sekarang
@@ -191,3 +237,4 @@ const showPassword = ref(false);
         </div>
     </div>
 </template>
+
