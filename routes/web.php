@@ -8,6 +8,24 @@ Route::get('/', fn () => Inertia::render('landing/Index'))->name('home');
 
 /*
 |--------------------------------------------------------------------------
+| Login dengan Google (OAuth 2.0)
+|--------------------------------------------------------------------------
+| /auth/google/redirect  → diarahkan ke halaman persetujuan Google
+| /auth/google/callback  → Google mengembalikan user ke sini
+|
+| Catatan: route ini SENGAJA di luar middleware `guest`. Kalau user punya
+| session lama yang masih hidup, middleware `guest` akan memantulkannya ke
+| dashboard sebelum callback sempat diproses. Pengecekan "sudah login atau
+| belum" dilakukan di dalam controller.
+*/
+Route::get('auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])
+    ->name('auth.google.redirect');
+
+Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])
+    ->name('auth.google.callback');
+
+/*
+|--------------------------------------------------------------------------
 | Pendaftaran per peran (Blok A)
 |--------------------------------------------------------------------------
 | Alur: pengguna memilih peran di /register, lalu diarahkan ke form yang
@@ -24,7 +42,32 @@ Route::middleware('guest')->group(function () {
 });
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Verifikasi Kode OTP
+|--------------------------------------------------------------------------
+| Halaman OTP dipakai untuk memverifikasi alamat email user.
+| Setelah register berhasil, user diarahkan ke sini (lihat
+| App\Http\Responses\RegisterResponse) sebelum boleh masuk dashboard.
+|
+| Middleware 'auth' saja — TAPI 'verified', karena user yang belum
+| verifikasi justru HARUS bisa membuka halaman ini.
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('verify-otp', [\App\Http\Controllers\OtpController::class, 'show'])
+        ->name('otp.show');
+
+    Route::post('verify-otp/send', [\App\Http\Controllers\OtpController::class, 'send'])
+        ->middleware('throttle:6,1')
+        ->name('otp.send');
+
+    Route::post('verify-otp/verify', [\App\Http\Controllers\OtpController::class, 'verify'])
+        ->middleware('throttle:10,1')
+        ->name('otp.verify');
+});
+
+
+Route::middleware(['auth', 'verified:otp.show'])->group(function () {
     Route::inertia('dashboard', 'dashboard/Index')->name('dashboard');
 });
 

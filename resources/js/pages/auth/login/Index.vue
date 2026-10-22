@@ -5,43 +5,10 @@ import InputError from '@/components/InputError.vue';
 import { Spinner } from '@/components/ui/spinner';
 import TextLink from '@/components/TextLink.vue';
 import { register } from '@/routes';
+import { redirect as googleRedirect } from '@/routes/auth/google';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Eye, EyeOff } from '@lucide/vue';
-
-/**
- * Blok A — Halaman Login (Figma frame "Login", 1440x1024).
- *
- * Hasil analisis piksel Figma export:
- * - Layout 2 kolom: kiri ilustrasi 600px (putih, aset gambar_login.png),
- *   kanan panel navy #161E2F full-height (x600-1440 = 840px).
- * - Form di kolom x665-1382 (lebar ~717px, padding panel ~64px).
- * - H1 "Selamat Datang" putih + "Kembali" MERAH #B51A2B di bagian atas.
- * - Input: isi PUTIH, border #541A2E 2px, radius 12px,
- *   ikon kiri (#242F49), teks #242F49.
- * - Checkbox "Ingat Saya" putih; "Lupa Password?" abu terang KANAN.
- * - Tombol "Masuk" merah full-width, radius 12px, teks putih.
- * - Pemisah "Atau" (garis + teks), lalu tombol putih:
- *   "Lanjutkan dengan Google".
- * - Footer: "Belum punya akun?" putih + "Daftar Sekarang" merah.
- * - Aset: gambar_login.png, icon_email.png, icon_password.png,
- *   icon_google.png (semua di /assets).
- *
- * ============ TANPA SCROLL DI DESKTOP ============
- * Desain Figma tingginya 1024px, tetapi layar desktop nyata (setelah
- * dikurangi toolbar browser) hanya sekitar 700-800px. Kalau semua jarak
- * Figma dipakai apa adanya, halaman jadi harus di-scroll.
- *
- * Karena itu tinggi elemen dan jarak vertikal di bawah ini diatur
- * MENYESUAIKAN TINGGI LAYAR (`h-screen`, bukan `min-h-screen`), dengan
- * proporsi visual yang tetap menyerupai Figma:
- *   - container utama: h-screen + overflow-hidden (tidak bisa scroll)
- *   - tinggi input/tombol memakai clamp() supaya mengecil di layar pendek
- *   - jarak antar-elemen memakai spasi yang mengecil di layar pendek
- *
- * Di layar yang sangat pendek (mis. tinggi < 640px), konten dibiarkan
- * bisa di-scroll supaya tetap bisa dipakai — lihat kelas `overflow-y-auto`.
- */
 
 defineProps<{
     status?: string;
@@ -65,13 +32,13 @@ const remember = ref(false);
     -->
     <div class="flex h-screen overflow-hidden bg-white">
         <!-- Ilustrasi kiri (600x1024, sesuai Figma) — hanya tampil di layar besar -->
-        <div class="hidden shrink-0 bg-white lg:block lg:w-[42%] xl:w-[600px]">
+        <div class="hidden shrink-0 bg-white lg:block lg:w-[42%] xl:w-150">
             <img
                 src="/assets/gambar_login.png"
                 alt="SponsorMatch — Kolaborasi untuk Event Berdampak"
                 class="h-full w-full object-cover object-top"
             />
-        </div>
+        </div>``
 
         <!--
             Panel kanan: navy, form di tengah. Konten dibungkus max-w 712px
@@ -79,7 +46,7 @@ const remember = ref(false);
             di layar pendek.
         -->
         <div class="flex flex-1 items-center justify-center overflow-y-auto bg-sm-navy px-6 lg:px-16">
-            <div class="w-full max-w-[712px] py-[clamp(1.5rem,4vh,4rem)]">
+            <div class="w-full max-w-178 py-[clamp(1.5rem,4vh,4rem)]">
                 <div
                     v-if="status"
                     class="mb-4 rounded-xl border-2 border-sm-red-dark bg-sm-card px-5 py-3 text-center text-sm font-medium text-white"
@@ -214,16 +181,19 @@ const remember = ref(false);
                         <span class="h-px flex-1 bg-white/25"></span>
                     </div>
 
-                    <!-- Tombol sosial (tampilan sesuai Figma; backend login
-                    Google belum diintegrasikan — klik tidak berbuat apa-apa).
-                    Tombol Apple sudah dihapus sesuai permintaan. -->
-                    <button
-                        type="button"
+                    <!-- Tombol sosial (sesuai Figma).
+                    Klik → /auth/google/redirect → Google → callback.
+                    Tombol ini memakai <a> (bukan <button>) karena harus
+                    MEMPINDAHKAN BROWSER ke halaman Google — itu pekerjaan
+                    browser, bukan AJAX. Tombol Apple sudah dihapus sesuai
+                    permintaan. -->
+                    <a
+                        :href="googleRedirect.url()"
                         class="mt-[clamp(1rem,2.6vh,2.5rem)] flex h-[clamp(3.25rem,6.6vh,4.3125rem)] w-full items-center justify-center gap-5 rounded-xl border-2 border-sm-red-dark bg-white text-[clamp(0.95rem,1.8vh,1.25rem)] font-medium text-sm-card transition-colors hover:bg-gray-50"
                     >
                         <img src="/assets/icon_google.png" alt="" class="h-[80%] w-auto" />
                         Lanjutkan dengan Google
-                    </button>
+                    </a>
 
                     <!-- Footer: daftar -->
                     <p class="mt-[clamp(1rem,2.4vh,2.5rem)] text-center text-[clamp(0.95rem,1.7vh,1.125rem)] text-white">

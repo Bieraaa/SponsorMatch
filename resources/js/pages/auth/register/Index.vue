@@ -22,7 +22,16 @@ import { login } from '@/routes';
  *
  * Ukuran/warna diukur dari export Figma "Role pick.png" (1440×1024):
  * kartu 500×550, border 5px, radius 24, tombol 445×58 r14.
+ *
+ * MODE GOOGLE:
+ *   Kalau pendaftaran dimulai dari "Lanjutkan dengan Google" (email belum
+ *   terdaftar), backend menaruh profil Google di session lalu mengarahkan
+ *   ke halaman ini. Kita tampilkan banner kecil supaya user tahu akunnya
+ *   sudah terhubung dan tinggal memilih peran.
  */
+defineProps<{
+    google?: { email: string; name: string } | null;
+}>();
 
 const roles = [
     {
@@ -71,6 +80,16 @@ const roles = [
                 <p class="mx-auto mt-[14px] max-w-[625px] text-center text-base leading-[30px]">
                     Pilih peran sesuai dengan kebutuhan anda untuk memperoleh pengalaman terbaik di SponsorMatch
                 </p>
+
+                <!-- Banner mode Google: akun sudah terhubung, tinggal pilih peran -->
+                <div
+                    v-if="google"
+                    class="mx-auto mt-[22px] max-w-[625px] rounded-[14px] border border-[#384358] bg-white/5 px-5 py-3 text-center text-sm leading-relaxed text-white/85"
+                >
+                    Melanjutkan pendaftaran dengan akun Google
+                    <span class="font-semibold text-white">{{ google.email }}</span>. Pilih peran di
+                    bawah ini untuk melanjutkan.
+                </div>
             </div>
 
             <!-- Dua kartu peran — 500×550, border 5px, radius 24 (diukur dari Figma) -->

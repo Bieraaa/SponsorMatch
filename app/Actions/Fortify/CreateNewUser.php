@@ -8,8 +8,10 @@ use App\Enums\UserRole;
 use App\Models\CompanyProfile;
 use App\Models\EoProfile;
 use App\Models\User;
+use App\Support\GoogleRegistration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
@@ -53,10 +55,35 @@ class CreateNewUser implements CreatesNewUsers
     {
         $role = $input['role'] ?? null;
 
+        // ---------------------------------------------------------------
+        // MODE GOOGLE: profil Google menunggu di session.
+        //
+        // Kalau user datang lewat tombol "Lanjutkan dengan Google" dan email
+        // nya belum terdaftar, callback Google TIDAK membuat akun — dia
+        // hanya menyimpan profil di session lalu mengarahkan user ke
+        // /register untuk memilih peran dan melengkapi data.
+        //
+        // Di sini (SATU-SATUNYA tempat pembuatan akun) kita memakai email
+        // dari session, bukan dari input form. Jadi user tidak bisa menulis
+        // email lain di form dan tetapdiklaim sebagai hasil login Google.
+        // ---------------------------------------------------------------
+        $google = GoogleRegistration::pending();
+        $isGoogle = $google !== null;
+
+        if ($isGoogle) {
+            $input['email'] = $google['email'];
+
+            if (blank($input['name'] ?? null)) {
+                $input['name'] = $google['name'];
+            }
+        }
+
         Validator::make($input, [
             ...$this->profileRules(),
             'role' => ['required', 'string', Rule::in(UserRole::values())],
-            'password' => $this->passwordRules(),
+            // Pada mode Google tidak ada password yang dibuat user — password
+            // acak dibuat server. Jadi aturan password dilewati.
+            'password' => $isGoogle ? ['nullable', 'string'] : $this->passwordRules(),
             // Jabatan & nomor telepon diminta di KEDUA form (sesuai Figma).
             'jabatan' => ['required', 'string', 'max:100'],
             'nomor_telepon' => ['required', 'string', 'max:30'],
@@ -107,14 +134,19 @@ class CreateNewUser implements CreatesNewUsers
             ],
         ])->validate();
 
-        return DB::transaction(function () use ($input, $role) {
+        return DB::transaction(function () use ($input, $role, $isGoogle) {
             $user = User::create([
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'role' => $role,
                 'nomor_telepon' => $input['nomor_telepon'],
                 'jabatan' => $input['jabatan'],
-                'password' => $input['password'],
+                // Mode Google: password DIACAK server (32 karakter) supaya
+                // kolom `password` tetap terisi & ter-hash otomatis oleh cast
+                // `hashed`. User ini tidak pernah memakai password form —
+                // dia masuk lewat Google. Password acak ini menutup jalan
+                // login paksa lewat form login biasa.
+                'password' => $isGoogle ? Str::password(32) : $input['password'],
             ]);
 
             // Profil sesuai peran — ditulis dalam transaksi yang sama.
@@ -136,10 +168,41 @@ class CreateNewUser implements CreatesNewUsers
                 ]);
             }
 
-            // Blok A: auto-verify saat pendaftaran. SMTP/email belum
-            // dikonfigurasi, jadi link verifikasi tidak bisa dikirim.
-            // Hapus baris ini saat email verifikasi sudah aktif.
-            $user->forceFill(['email_verified_at' => now()])->save();
+            // PENTING: `email_verified_at` SENGAJA TIDAK diisi di sini.
+            //
+            // Sebelumnya baris ini ada:
+            //     $user->forceFill(['email_verified_at' => now()])->save();
+            // Itu berarti email TIDAK PERLU diverifikasi sama sekali — siapa
+            // pun bisa mendaftar pakai email orang lain dan langsung masuk.
+            //
+            // Sekarang email diverifikasi beneran:
+            //   1. Event `Registered` dilepas → Laravel listener memanggil
+            //      User::sendEmailVerificationNotification() → email terkirim.
+            //   2. User membuka link / memasukkan kode OTP → email_verified_at
+            //      terisi → middleware `verified` mengizinkan akses dashboard.
+            //
+            // Catatan: user yang belum verifikasi akan diarahkan ke
+            // /verify-otp (lihat Fortify::redirects di FortifyServiceProvider).
+
+            // ---------------------------------------------------------------
+            // MODE GOOGLE: email SUDAH terverifikasi oleh Google.
+            //
+            // Google hanya mengembalikan email yang sudah terverifikasi di
+            // sisi Google (scope `email`). Jadi kita boleh menandai email
+            // terverifikasi TANPA mengirim kode OTP.
+            //
+            // Efek samping yang bagus: listener `Registered` milik Laravel
+            // hanya memanggil sendEmailVerificationNotification() kalau
+            // hasVerifiedEmail() masih false — jadi user Google TIDAK
+            // menerima email verifikasi yang sia-sia.
+            // ---------------------------------------------------------------
+            if ($isGoogle) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+
+                // Pendaftaran selesai — hapus profil Google dari session
+                // supaya tidak ikut terbalik ke form pendaftaran biasa.
+                GoogleRegistration::forget();
+            }
 
             return $user;
         });

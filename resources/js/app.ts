@@ -16,12 +16,14 @@ void createInertiaApp({
             //   - landing/Index      : snap-scroll satu halaman penuh
             //   - auth/login/Index   : split kiri-ilustrasi + kanan-panel navy
             //   - auth/register/*    : full-screen navy (role pick + form per peran)
+            //   - auth/otp/Index     : full-screen navy + kartu putih (verifikasi OTP)
             case name === 'Welcome':
             case name === 'landing/Index':
             case name === 'auth/login/Index':
             case name === 'auth/register/Index':
             case name === 'auth/register/eo/Index':
             case name === 'auth/register/perusahaan/Index':
+            case name === 'auth/otp/Index':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

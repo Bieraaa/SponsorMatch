@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google (OAuth 2.0) — untuk login "Lanjutkan dengan Google"
+    |--------------------------------------------------------------------------
+    |
+    | Kredensial diambil dari Google Cloud Console:
+    |   APIs & Services → Credentials → Create OAuth client ID (Web app).
+    |
+    | `redirect` WAJIB sama persis dengan "Authorized redirect URIs" yang
+    | didaftarkan di Google. Kalau tidak sama, Google akan menolak dengan
+    | error "redirect_uri_mismatch".
+    |
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost:8000').'/auth/google/callback'),
+    ],
+
 ];

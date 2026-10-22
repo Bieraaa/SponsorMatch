@@ -99,6 +99,32 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Kirim notifikasi email verifikasi.
+     *
+     * Override method bawaan Laravel supaya kita memakai notifikasi
+     * sendiri (bahasa Indonesia + template branded), bukan class bawaan
+     * Illuminate\Auth\Notifications\VerifyEmail.
+     *
+     * Dipanggil otomatis oleh listener SendEmailVerificationNotification
+     * saat event `Registered` ditembakkan (yaitu setelah register berhasil).
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new \App\Notifications\VerifyEmailNotification);
+    }
+
+    /**
+     * Kirim notifikasi reset password.
+     *
+     * Override method bawaan Laravel (Illuminate\Auth\Passwords\CanResetPassword)
+     * supaya email reset password juga memakai template branded kita.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
+
+    /**
      * Apakah akun ini Event Organizer?
      */
     public function isEventOrganizer(): bool

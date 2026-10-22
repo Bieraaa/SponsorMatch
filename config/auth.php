@@ -96,7 +96,11 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
+            // Masa berlaku token reset password, dalam MENIT.
+            // 5 menit — sama dengan masa berlaku kode OTP, supaya konsisten.
+            'expire' => 5,
+            // Berapa detik user harus menunggu sebelum bisa minta
+            // token reset baru (anti-spam). Tetap 60 detik.
             'throttle' => 60,
         ],
     ],

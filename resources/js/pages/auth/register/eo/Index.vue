@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import InputError from '@/components/InputError.vue';
 import { Label } from '@/components/ui/label';
@@ -20,12 +21,35 @@ import RegisterShell from '../components/RegisterShell.vue';
  * (App\Actions\Fortify\CreateNewUser) memvalidasi 'nama_event_organizer'
  * hanya ketika role = 'eo'.
  *
+ * MODE GOOGLE:
+ *   Kalau user datang lewat tombol "Lanjutkan dengan Google" dan emailnya
+ *   belum terdaftar, backend menyalin email & nama Google ke form ini
+ *   (prop `google`). Effect-nya:
+ *     - email terkunci (read-only) — milik Google, tidak boleh diganti,
+ *     - field password disembunyikan — password dibuat acak di server,
+ *     - user tinggal mengisi jabatan, telepon, dan nama event organizer.
+ *
  * Halaman dirender tanpa AuthLayout (lihat app.ts).
  */
+
+/**
+ * Prop halaman. `google` bernilai null untuk pendaftaran biasa (form email +
+ * password). Isinya diisi hanya kalau pendaftaran dilanjutkan dari Google.
+ */
+const props = defineProps<{
+    google?: { email: string; name: string } | null;
+}>();
+
+/** True kalau pendaftaran ini dimulai dari login Google. */
+const isGoogle = computed(() => props.google != null);
 
 /** Gaya input gelap yang seragam untuk seluruh field di halaman ini. */
 const inputClass =
     'h-[54px] rounded-[14px] border-[#4A5670] bg-sm-navy px-4 text-base text-white placeholder:text-white/45 focus-visible:border-sm-red focus-visible:ring-0';
+
+/** Gaya input yang terkunci (data dari Google — tidak bisa diedit). */
+const readOnlyInputClass =
+    'h-[54px] rounded-[14px] border-[#384358] bg-sm-navy px-4 text-base text-white/70 placeholder:text-white/45 focus-visible:border-sm-red focus-visible:ring-0';
 </script>
 
 <template>
@@ -44,6 +68,16 @@ const inputClass =
             <!-- Peran dikirim sebagai field tersembunyi; menentukan cabang validasi -->
             <input type="hidden" name="role" value="eo" />
 
+            <!-- Info: pendaftaran dilanjutkan dari akun Google -->
+            <div
+                v-if="isGoogle"
+                class="rounded-[14px] border border-[#384358] bg-white/5 px-4 py-3 text-sm leading-relaxed text-white/85"
+            >
+                Melanjutkan pendaftaran dengan akun Google
+                <span class="font-semibold text-white">{{ google?.email }}</span>. Email sudah
+                terverifikasi, jadi kamu tidak perlu membuat password.
+            </div>
+
             <RegisterField
                 id="name"
                 label="Nama Lengkap"
@@ -51,6 +85,7 @@ const inputClass =
                 autocomplete="name"
                 required
                 autofocus
+                :default-value="google?.name"
                 :input-class="inputClass"
                 :error="errors.name"
             />
@@ -62,7 +97,9 @@ const inputClass =
                 placeholder="nama@email.com"
                 autocomplete="email"
                 required
-                :input-class="inputClass"
+                :readonly="isGoogle"
+                :default-value="google?.email"
+                :input-class="isGoogle ? readOnlyInputClass : inputClass"
                 :error="errors.email"
             />
 
@@ -95,13 +132,15 @@ const inputClass =
                 :error="errors.nama_event_organizer"
             />
 
-            <div class="grid gap-2">
+            <!-- Password hanya untuk pendaftaran biasa. Pada mode Google, password
+                 dibuat acak oleh server (lihat App\Actions\Fortify\CreateNewUser). -->
+            <div v-if="!isGoogle" class="grid gap-2">
                 <Label for="password" class="text-base text-white">Password</Label>
                 <PasswordInput id="password" name="password" required :class="inputClass" />
                 <InputError :message="errors.password" class="text-[#FF8A96]" />
             </div>
 
-            <div class="grid gap-2">
+            <div v-if="!isGoogle" class="grid gap-2">
                 <Label for="password_confirmation" class="text-base text-white">Konfirmasi Password</Label>
                 <PasswordInput
                     id="password_confirmation"

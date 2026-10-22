@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Support\GoogleRegistration;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,7 +23,15 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Response pendaftaran kustom.
         //
+        // Response bawaan Fortify memakai redirect()->intended() yang bisa
+        // mengarah ke URL lain. Kita selalu mau arahkan user ke halaman
+        // OTP untuk verifikasi email, jadi kita ganti.
+        $this->app->singleton(
+            \Laravel\Fortify\Contracts\RegisterResponse::class,
+            \App\Http\Responses\RegisterResponse::class,
+        );
     }
 
     /**
@@ -109,17 +118,31 @@ class FortifyServiceProvider extends ServiceProvider
         //   GET /register/perusahaan    → form Perusahaan
         // Ketiganya POST ke /register (route Fortify yang sama), dengan
         // <input type="hidden" name="role"> menentukan cabang validasinya.
+        //
+        // PROPS `google`: kalau user datang dari callback Google dengan email
+        // baru, profilnya masih tersimpan di session. Kita kirim email &
+        // nama itu ke form supaya:
+        //   - field email ditampilkan terkunci (read-only),
+        //   - field password disembunyikan (password dibuat server),
+        //   - user tinggal melengkapi data perannya.
+        // Kalau tidak ada profil Google di session, prop-nya null → form
+        // tampil normal seperti biasa.
         Fortify::registerView(function (Request $request) {
             $passwordRules = Password::defaults()->toPasswordRulesString();
+            $google = GoogleRegistration::toArray(GoogleRegistration::pending());
 
             return match ($request->route()?->getName()) {
                 'register.eo' => Inertia::render('auth/register/eo/Index', [
                     'passwordRules' => $passwordRules,
+                    'google' => $google,
                 ]),
                 'register.perusahaan' => Inertia::render('auth/register/perusahaan/Index', [
                     'passwordRules' => $passwordRules,
+                    'google' => $google,
                 ]),
-                default => Inertia::render('auth/register/Index'),
+                default => Inertia::render('auth/register/Index', [
+                    'google' => $google,
+                ]),
             };
         });
 

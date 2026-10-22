@@ -71,13 +71,20 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+
+        // SETELAH register, user diarahkan ke halaman OTP untuk verifikasi
+        // email — bukan langsung ke dashboard.
+        $response->assertRedirect(route('otp.show', absolute: false));
 
         $user = User::where('email', 'budi@eo.test')->firstOrFail();
         $this->assertSame('eo', $user->role->value);
         $this->assertSame('Ketua', $user->jabatan);
         $this->assertSame('081234567890', $user->nomor_telepon);
-        $this->assertNotNull($user->email_verified_at);
+
+        // Email BELUM terverifikasi — ini justru Feature-nya.
+        // Dulu `email_verified_at` di-force jadi `now()` saat register,
+        // artinya siapa pun bisa daftar pakai email orang lain.
+        $this->assertNull($user->email_verified_at);
 
         // Profil EO dibuat di tabel yang benar (bukan company_profiles)
         $this->assertDatabaseHas('eo_profiles', [
@@ -123,10 +130,11 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('otp.show', absolute: false));
 
         $user = User::where('email', 'siti@corp.test')->firstOrFail();
         $this->assertSame('sponsor', $user->role->value);
+        $this->assertNull($user->email_verified_at);
 
         // Profil perusahaan dibuat di tabel yang benar
         $profile = CompanyProfile::where('idUser', $user->id)->firstOrFail();

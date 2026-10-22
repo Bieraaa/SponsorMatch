@@ -28,6 +28,16 @@ defineProps<{
     error?: string;
     /** Teks bantuan kecil di bawah input (opsional) */
     hint?: string;
+    /**
+     * Nilai awal input (pre-fill). Dipakai untuk mengisi nama & email yang
+     * sudah datang dari Google, supaya user tidak perlu mengetik ulang.
+     */
+    defaultValue?: string;
+    /**
+     * Input tidak bisa diedit. Dipakai untuk email yang berasal dari akun
+     * Google — email itu milik Google, user tidak boleh menggantinya.
+     */
+    readonly?: boolean;
 }>();
 </script>
 
@@ -42,6 +52,8 @@ defineProps<{
             :autocomplete="autocomplete"
             :required="required"
             :autofocus="autofocus"
+            :default-value="defaultValue"
+            :readonly="readonly"
             :class="inputClass"
         />
         <p v-if="hint" class="text-xs text-white/60">{{ hint }}</p>
