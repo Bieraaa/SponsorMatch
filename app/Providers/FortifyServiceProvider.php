@@ -108,9 +108,14 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email/Index', [
-            'status' => $request->session()->get('status'),
-        ]));
+        // Halaman "verifikasi email" bawaan Fortify diarahkan ke halaman OTP.
+        //
+        // SponsorMatch hanya punya SATU alur verifikasi email: kode OTP 6
+        // digit di /verify-otp (sesuai desain Figma). Email "verifikasi
+        // email" berisi tautan sudah tidak lagi dikirim — makanya halaman
+        // ini tidak boleh menampilkan tombol "kirim ulang tautan" yang
+        // membingungkan user.
+        Fortify::verifyEmailView(fn (Request $request) => redirect()->route('otp.show'));
 
         // Blok A — pendaftaran 2 langkah dengan URL terpisah per peran:
         //   GET /register               → layar "Role Pick" (pilih peran)

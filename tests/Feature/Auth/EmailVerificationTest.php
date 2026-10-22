@@ -52,16 +52,40 @@ class EmailVerificationTest extends TestCase
 
         $user = User::where('email', 'budi@eo.test')->firstOrFail();
 
-        Notification::assertSentTo(
-            $user,
-            VerifyEmailNotification::class,
-            function (VerifyEmailNotification $notification) use ($user): bool {
-                // Link verifikasi harus signed URL yang berlaku 60 menit.
-                $this->assertTrue($notification->via($user) === ['mail']);
+        // Pendaftaran harus mengirim email berisi KODE OTP.
+        $code = $this->grabOtpCode($user);
 
-                return true;
-            },
-        );
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $code);
+
+        // Kode harus tersimpan sebagai hash, dan hanya ada satu kode aktif.
+        $otp = OtpCode::where('idUser', $user->id)->firstOrFail();
+
+        $this->assertSame(OtpService::hashCode($code), $otp->code_hash);
+        $this->assertSame(1, OtpCode::where('idUser', $user->id)->count());
+    }
+
+    public function test_email_verification_link_is_not_sent_after_registration(): void
+    {
+        Notification::fake();
+
+        $this->post(route('register.store'), [
+            'role' => 'eo',
+            'name' => 'Tanpa Link',
+            'email' => 'tanpa-link@eo.test',
+            'jabatan' => 'Ketua',
+            'nomor_telepon' => '081234567890',
+            'nama_event_organizer' => 'EO Tanpa Link',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $user = User::where('email', 'tanpa-link@eo.test')->firstOrFail();
+
+        // User hanya boleh menerima SATU email: yang berisi kode OTP.
+        // Email "verifikasi email" (tautan) bawaan Laravel sudah dimatikan
+        // supaya user tidak salah pilih alur verifikasi.
+        Notification::assertNotSentTo($user, VerifyEmailNotification::class);
+        Notification::assertSentTo($user, OtpNotification::class);
     }
 
     public function test_registered_user_email_is_not_marked_verified_immediately(): void
@@ -82,6 +106,35 @@ class EmailVerificationTest extends TestCase
         $user = User::where('email', 'belum@eo.test')->firstOrFail();
 
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_opening_otp_page_after_registration_does_not_send_second_email(): void
+    {
+        Notification::fake();
+
+        $this->post(route('register.store'), [
+            'role' => 'eo',
+            'name' => 'Cuma Satu Email',
+            'email' => 'satu-email@eo.test',
+            'jabatan' => 'Ketua',
+            'nomor_telepon' => '081234567890',
+            'nama_event_organizer' => 'EO Satu Email',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $user = User::where('email', 'satu-email@eo.test')->firstOrFail();
+
+        // Kode OTP sudah dibuat saat pendaftaran.
+        $this->assertSame(1, OtpCode::where('idUser', $user->id)->count());
+
+        // Membuka halaman OTP tidak boleh mengirim email kedua — kode yang
+        // sudah ada masih aktif (berlaku 5 menit), jadi tidak perlu
+        // digenerate ulang.
+        $this->actingAs($user)->get(route('otp.show'))->assertOk();
+
+        $this->assertSame(1, OtpCode::where('idUser', $user->id)->count());
+        Notification::assertSentToTimes($user, OtpNotification::class, 1);
     }
 
     // ------------------------------------------------------------------
@@ -122,6 +175,17 @@ class EmailVerificationTest extends TestCase
     public function test_guest_is_redirected_away_from_otp_page(): void
     {
         $this->get(route('otp.show'))->assertRedirect(route('login'));
+    }
+
+    public function test_fortify_verify_email_page_redirects_to_otp_page(): void
+    {
+        // Halaman "verifikasi email" bawaan Fortify sudah tidak dipakai —
+        // SponsorMatch hanya punya satu alur verifikasi: kode OTP.
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)
+            ->get(route('verification.notice'))
+            ->assertRedirect(route('otp.show'));
     }
 
     // ------------------------------------------------------------------

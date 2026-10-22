@@ -54,7 +54,12 @@ Route::middleware('guest')->group(function () {
 | verifikasi justru HARUS bisa membuka halaman ini.
 */
 Route::middleware('auth')->group(function () {
+    // Throttle 10/menit: halaman ini bisa MEMBUAT kode OTP baru (kalau
+    // kode sebelumnya sudah expired). Tanpa throttle, user (atau bot yang
+    // sudah login) bisa refresh terus-menerus → membanjiri inbox email
+    // sendiri dengan kode baru (email bombing) tanpa batas.
     Route::get('verify-otp', [\App\Http\Controllers\OtpController::class, 'show'])
+        ->middleware('throttle:10,1')
         ->name('otp.show');
 
     Route::post('verify-otp/send', [\App\Http\Controllers\OtpController::class, 'send'])

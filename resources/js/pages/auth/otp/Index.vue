@@ -38,6 +38,12 @@ const props = defineProps<{
     error?: string | null;
     /** true kalau kode baru JUST terkirim. */
     sent?: boolean;
+    /**
+     * true kalau email OTP GAGAL dikirim (mis. domain demo Mailtrap hanya
+     * boleh mengirim ke email pemilik akun). Tanpa peringatan ini user
+     * akan menunggu kode yang memang tidak pernah sampai.
+     */
+    mailFailed?: boolean;
 }>();
 
 /** Isi 6 kotak OTP. */
@@ -187,14 +193,14 @@ const errorMessage = computed(() => props.error ?? form.errors.code ?? null);
     <div class="flex min-h-screen flex-col items-center justify-center bg-sm-navy px-4 py-8">
         <!-- Kartu putih 724 x 764px (sesuai Figma) -->
         <div
-            class="w-full max-w-[724px] rounded-[20px] bg-white px-6 py-8 sm:px-10 lg:min-h-[764px] lg:px-[60px] lg:pt-[23px]"
+            class="w-full max-w-181 rounded-[20px] bg-white px-6 py-8 sm:px-10 lg:min-h-191 lg:px-15 lg:pt-5.75"
         >
             <!-- Logo SponsorMatch (346 x 54px) -->
             <div class="flex justify-center">
                 <img
                     src="/assets/logo_sponsormatch_lengkap.svg"
                     alt="SponsorMatch"
-                    class="h-[42px] w-auto lg:h-[54px]"
+                    class="h-10.5 w-auto lg:h-13.5"
                 />
             </div>
 
@@ -235,22 +241,32 @@ const errorMessage = computed(() => props.error ?? form.errors.code ?? null);
                 Kode OTP baru sudah dikirim ke {{ email }}.
             </p>
 
+            <!-- Peringatan: email gagal dikirim -->
+            <p
+                v-else-if="mailFailed"
+                class="mt-5 rounded-xl border-2 border-sm-amber bg-[#FFF7ED] px-4 py-3 text-center text-sm font-medium text-[#7C4A03]"
+                role="alert"
+            >
+                Kode OTP sudah dibuat, tetapi email gagal dikirim. Coba
+                kirim ulang atau hubungi admin.
+            </p>
+
             <!--
                 6 kotak OTP: masing-masing 80 x 80px, border 1px #384358,
                 radius 12px, jarak 20px (baris selebar 580px, di tengah).
             -->
-            <div class="mt-[14px] lg:mt-[8px]">
+            <div class="mt-3.5 lg:mt-2">
                 <InputOTP
                     v-model="code"
                     :maxlength="6"
-                    pattern="[0-9]*"
+                    pattern="^[0-9]*$"
                     inputmode="numeric"
                     autocomplete="one-time-code"
                     aria-label="Kode OTP 6 digit"
-                    class="mx-auto w-full max-w-[580px]"
+                    class="mx-auto w-full max-w-145"
                 >
                     <InputOTPGroup
-                        class="grid w-full grid-cols-6 gap-[10px] lg:gap-[20px]"
+                        class="grid w-full grid-cols-6 gap-2.5 lg:gap-5"
                     >
                         <InputOTPSlot
                             v-for="index in 6"

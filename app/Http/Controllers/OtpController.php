@@ -53,8 +53,25 @@ class OtpController extends Controller
         }
 
         // Belum ada kode aktif → kirim kode pertama kali.
+        //
+        // Kalau email gagal terkirim saat PENDAFTARAN, listener
+        // SendOtpOnRegistration sudah MENGHAPUS kodenya — jadi di sini
+        // kode baru dibuat & dikirim ulang (percobaan kedua). Kalau pun
+        // gagal lagi, banner peringatan di bawah akan menampilkannya.
+        $issued = false;
+        $mailFailed = false;
+
         if (! $this->hasActiveCode($user, $purpose)) {
+            $issued = true;
             $this->otp->issue($user, $purpose, force: true);
+            $mailFailed = $this->otp->lastMailError() !== null;
+        }
+
+        // Flag "email gagal saat pendaftaran" dari listener. Kalau halaman
+        // ini sempat mencoba mengirim ulang dengan BERHASIL, kegagalan
+        // sebelumnya sudah tidak relevan → jangan tampilkan banner.
+        if (session()->pull('otpMailFailed') && ! $issued) {
+            $mailFailed = true;
         }
 
         return Inertia::render('auth/otp/Index', [
@@ -69,6 +86,10 @@ class OtpController extends Controller
             // Diambil dari flash session — otomatis hilang setelah dibaca sekali.
             'error' => session('otpError'),
             'sent' => (bool) session('otpSent'),
+            // true kalau email OTP GAGAL dikirim (mis. domain demo Mailtrap
+            // hanya boleh kirim ke email pemilik akun). UI menampilkan
+            // peringatan supaya user tidak menunggu kode yang tak akan datang.
+            'mailFailed' => $mailFailed,
         ]);
     }
 
@@ -92,6 +113,15 @@ class OtpController extends Controller
             $this->otp->issue($user, $purpose);
         } catch (Throwable $e) {
             return back()->with('otpError', $e->getMessage());
+        }
+
+        // Kode dibuat, tapi email-nya gagal dikirim. Jangan diam-diam saja —
+        // beri tahu user supaya dia tahu emailnya memang tidak keluar.
+        if ($this->otp->lastMailError() !== null) {
+            return back()->with(
+                'otpError',
+                'Kode OTP dibuat, tetapi email gagal dikirim. Periksa koneksi internet atau hubungi admin.'
+            );
         }
 
         return back()->with('otpSent', true);
