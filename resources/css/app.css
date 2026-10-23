@@ -162,6 +162,32 @@
     --sidebar: hsl(240 5.9% 10%);
 }
 
+/*
+ * Sidebar SponsorMatch SELALU terang, mengikuti desain Figma:
+ * latar PUTIH + teks/ikon NAVY #242F49, di mode terang maupun mode gelap.
+ *
+ * Kenapa perlu aturan ini? shadcn mengganti --sidebar-* menjadi gelap
+ * begitu kelas `.dark` aktif (mode gelap OS/browser). Menu SponsorMatch
+ * memakai warna navy yang tetap, jadi tanpa aturan ini teks navy ikut
+ * jadi tidak terbaca di atas sidebar yang gelap.
+ *
+ * Selector dipakai pada elemen sidebar (bukan :root) supaya overriding
+ * ini hanya berlaku di dalam sidebar — desktop maupun mobile (sheet).
+ */
+[data-slot='sidebar'],
+[data-sidebar='sidebar'] {
+    --sidebar-background: #ffffff;
+    --sidebar-foreground: #242f49;
+    --sidebar-border: #e6e6e6;
+    --sidebar-accent: #f1f2f6;
+    --sidebar-accent-foreground: #161e2f;
+    --sidebar-primary: #242f49;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-ring: #b51a2b;
+    /* teks kecil (email di footer) tetap kontras di atas putih */
+    --muted-foreground: #737373;
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;

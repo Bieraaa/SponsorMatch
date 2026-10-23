@@ -2,6 +2,8 @@ export type User = {
     id: number;
     name: string;
     email: string;
+    /** Peran akun: 'eo' (Event Organizer) atau 'sponsor' (Perusahaan). */
+    role?: 'eo' | 'sponsor';
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

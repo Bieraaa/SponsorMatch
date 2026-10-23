@@ -74,6 +74,59 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'verified:otp.show'])->group(function () {
     Route::inertia('dashboard', 'dashboard/Index')->name('dashboard');
+
+    /*
+    |----------------------------------------------------------------------
+    | Halaman "Proposal Saya" (Event Organizer)
+    |----------------------------------------------------------------------
+    | Satu route utama (GET /proposals) untuk seluruh interaksi halaman:
+    | pencarian, tab status, periode grafik, pagination, dan pemilihan
+    | proposal pada panel detail memakai query string + partial reload
+    | Inertia (lihat resources/js/pages/proposals/Index.vue).
+    |
+    | Route aksi:
+    |  - GET  /proposals/{proposal}/dokumen  → unduh dokumen (hanya pemilik
+    |          proposal atau sponsor yang menerima proposal tersebut).
+    |  - POST /proposals/{tracking}/tindak-lanjut → catat follow-up baru
+    |          ke tabel `follow_up_logs`.
+    */
+    Route::get('proposals', [\App\Http\Controllers\ProposalController::class, 'index'])
+        ->name('proposals.index');
+
+    Route::post('proposals', [\App\Http\Controllers\ProposalController::class, 'store'])
+        ->name('proposals.store');
+
+    // Ekstraksi isi PDF → isi form otomatis (sebelum route dengan parameter).
+    Route::post('proposals/ekstrak', [\App\Http\Controllers\ProposalController::class, 'extract'])
+        ->name('proposals.ekstrak');
+
+    Route::post('proposals/{proposal}/publish', [\App\Http\Controllers\ProposalController::class, 'publish'])
+        ->name('proposals.publish');
+
+    Route::get('proposals/{proposal}/send', [\App\Http\Controllers\ProposalController::class, 'showSendForm'])
+        ->name('proposals.send');
+
+    Route::post('proposals/{proposal}/send', [\App\Http\Controllers\ProposalController::class, 'send'])
+        ->name('proposals.send.store');
+
+    Route::get('proposals/{proposal}/dokumen', [\App\Http\Controllers\ProposalController::class, 'download'])
+        ->name('proposals.dokumen');
+
+    Route::post('proposals/{tracking}/tindak-lanjut', [\App\Http\Controllers\ProposalController::class, 'followUp'])
+        ->name('proposals.tindak-lanjut');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Halaman Sponsor (Perusahaan)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified:otp.show'])->prefix('sponsor')->name('sponsor.')->group(function () {
+    Route::get('proposals', [\App\Http\Controllers\Sponsor\ProposalController::class, 'index'])->name('proposals.index');
+    Route::get('proposals/{tracking}', [\App\Http\Controllers\Sponsor\ProposalController::class, 'show'])->name('proposals.show');
+    Route::post('proposals/{tracking}/offer', [\App\Http\Controllers\Sponsor\ProposalController::class, 'offer'])->name('proposals.offer');
+    Route::post('proposals/{tracking}/respond', [\App\Http\Controllers\Sponsor\ProposalController::class, 'respond'])->name('proposals.respond');
+    Route::get('proposals/{proposal}/dokumen', [\App\Http\Controllers\Sponsor\ProposalController::class, 'download'])->name('proposals.dokumen');
 });
 
 require __DIR__.'/settings.php';
